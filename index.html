@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FUOS: F* Ur OS. One agent, real apps.</title>
+<meta name="description" content="FUOS is an AI workstation in your browser: Chromium, a VS Code-compatible editor, LibreOffice documents, a real terminal and JupyterLab, worked by one agent that sees your screen and asks before it acts.">
+<link rel="canonical" href="https://fuos.ai/">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#000000">
+<meta name="color-scheme" content="dark">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="FUOS">
+<meta property="og:url" content="https://fuos.ai/">
+<meta property="og:title" content="FUOS: F* Ur OS">
+<meta property="og:description" content="One agent. Real apps only. Zero tab hell.">
+<meta property="og:image" content="https://fuos.ai/assets/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="The FUOS emblem: the letters FU in smoked glass over neon paint splashes">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="FUOS: F* Ur OS">
+<meta name="twitter:description" content="One agent. Real apps only. Zero tab hell.">
+<meta name="twitter:image" content="https://fuos.ai/assets/og.jpg">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preload" href="assets/poster.webp" as="image" type="image/webp">
+<link rel="preload" href="fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+@font-face { font-family: "Inter"; src: url("fonts/inter.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+@font-face { font-family: "JetBrains Mono"; src: url("fonts/jetbrains-mono.woff2") format("woff2"); font-weight: 100 800; font-display: swap; }
+:root {
+  --pitch: #000;
+  --card: #0b101a;
+  --card-2: #0f1522;
+  --lime: #a3ff00;
+  --cyan: #00f0ff;
+  --white: #f8fafc;
+  --muted: #a8b3c4;
+  --border: rgba(255, 255, 255, 0.14);
+  --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --gutter: clamp(16px, 4vw, 32px);
+  --max: 1200px;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 72px; -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--pitch); color: var(--white); font: 400 17px/1.6 var(--sans); overflow-x: hidden; }
+img, video { display: block; max-width: 100%; height: auto; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; border-radius: 6px; }
+.wrap { max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter); }
+.skip { position: absolute; left: -999px; top: 8px; z-index: 100; background: var(--lime); color: #000; padding: 12px 16px; border-radius: 8px; font-weight: 700; }
+.skip:focus { left: 8px; }
+
+/* nav */
+.nav { position: sticky; top: 0; z-index: 50; background: rgba(0, 0, 0, 0.86); border-bottom: 1px solid var(--border); }
+@supports (backdrop-filter: blur(1px)) { .nav { background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(14px); } }
+.nav-inner { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 64px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; text-decoration: none; font-weight: 900; letter-spacing: 0.12em; font-size: 18px; }
+.brand img { width: 48px; height: 26px; object-fit: contain; }
+.pill { font: 700 12px/1 var(--mono); letter-spacing: 0.1em; color: #000; background: var(--lime); padding: 5px 8px; border-radius: 999px; }
+.links { display: flex; gap: 4px; }
+.links a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; border-radius: 999px; text-decoration: none; color: var(--muted); font-weight: 600; font-size: 15px; }
+.links a:hover { color: var(--white); background: rgba(255, 255, 255, 0.06); }
+.menu-btn { display: none; width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--border); background: var(--card); color: var(--white); cursor: pointer; align-items: center; justify-content: center; }
+.menu-btn svg { width: 22px; height: 22px; }
+.drawer { display: none; }
+@media (max-width: 760px) {
+  .links { display: none; }
+  .menu-btn { display: inline-flex; }
+  .drawer:not([hidden]) { display: block; border-top: 1px solid var(--border); padding: 8px var(--gutter) 16px; }
+  .drawer a { display: flex; align-items: center; min-height: 48px; border-bottom: 1px solid var(--border); text-decoration: none; font: 600 16px/1.2 var(--mono); }
+  .drawer a:last-child { border-bottom: 0; }
+}
+
+/* hero */
+.hero { padding: clamp(32px, 7vw, 88px) 0 clamp(40px, 7vw, 96px); }
+.hero-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: clamp(24px, 4vw, 56px); align-items: center; }
+.kicker { font: 700 13px/1.4 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--lime); margin: 0 0 14px; }
+h1 { margin: 0; line-height: 1.02; }
+.h1-main { display: block; font-size: clamp(56px, 10vw, 104px); font-weight: 900; letter-spacing: -0.04em; background: linear-gradient(90deg, var(--white) 0%, #d9ff8a 30%, var(--lime) 70%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.h1-sub { display: block; margin-top: 12px; font-size: clamp(24px, 3.4vw, 34px); font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; }
+.lead { margin: 20px 0 0; color: var(--muted); font-size: clamp(17px, 1.6vw, 19px); max-width: 38em; }
+.lead strong { color: var(--white); font-weight: 650; }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 22px; border-radius: 999px; font-weight: 750; font-size: 16px; text-decoration: none; border: 1px solid var(--border); }
+.btn-lime { background: linear-gradient(90deg, var(--lime), var(--cyan)); color: #000; border: 0; }
+.btn-ghost { background: var(--card); color: var(--white); }
+.btn-ghost:hover { border-color: var(--cyan); }
+.stage { position: relative; border-radius: 24px; border: 1px solid rgba(0, 240, 255, 0.35); background: #000; overflow: hidden; box-shadow: 0 0 60px rgba(0, 240, 255, 0.12); aspect-ratio: 768 / 322; }
+.stage video, .stage img { width: 100%; height: 100%; object-fit: cover; }
+.facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 28px; }
+.fact { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px 16px; }
+.fact b { display: block; font: 800 15px/1.3 var(--mono); color: var(--lime); letter-spacing: 0.04em; }
+.fact span { display: block; margin-top: 6px; color: var(--muted); font-size: 14px; line-height: 1.45; }
+@media (max-width: 980px) {
+  .hero-grid { grid-template-columns: 1fr; }
+  .stage { order: -1; }
+}
+@media (max-width: 620px) {
+  .facts { grid-template-columns: 1fr; }
+  .actions .btn { flex: 1 1 100%; }
+}
+
+/* sections */
+section.block { padding: clamp(48px, 8vw, 104px) 0; border-top: 1px solid var(--border); }
+h2 { margin: 0; font-size: clamp(30px, 4.6vw, 48px); line-height: 1.08; letter-spacing: -0.025em; font-weight: 850; max-width: 20em; }
+.desc { margin: 16px 0 0; color: var(--muted); max-width: 44em; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px; margin-top: 36px; }
+.cards.two { grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 24px; }
+.card .num { font: 700 13px/1 var(--mono); color: var(--cyan); letter-spacing: 0.12em; }
+.card h3 { margin: 12px 0 8px; font-size: 21px; line-height: 1.25; letter-spacing: -0.01em; }
+.card p { margin: 0; color: var(--muted); font-size: 16px; }
+.card ul { margin: 14px 0 0; padding: 0; list-style: none; }
+.card li { position: relative; padding-left: 22px; margin-top: 8px; color: var(--white); font-size: 16px; line-height: 1.5; }
+.card li::before { content: ""; position: absolute; left: 2px; top: 0.6em; width: 9px; height: 9px; border-radius: 2px; background: var(--lime); transform: rotate(45deg); }
+
+/* comparison */
+.compare { margin-top: 36px; border: 1px solid var(--border); border-radius: 20px; overflow: hidden; }
+.row { display: grid; grid-template-columns: 200px 1fr 1fr; border-top: 1px solid var(--border); }
+.row:first-child { border-top: 0; }
+.row > div { padding: 18px 20px; font-size: 16px; }
+.row .dim { font-weight: 750; }
+.row .old { color: var(--muted); }
+.row .new { background: rgba(163, 255, 0, 0.05); }
+.row.head > div { font: 700 13px/1.3 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); padding-top: 14px; padding-bottom: 14px; }
+.row.head .new { color: var(--lime); }
+.row .tag { display: none; }
+@media (max-width: 760px) {
+  .row.head { display: none; }
+  .row { grid-template-columns: 1fr; }
+  .row > div { padding: 12px 18px; }
+  .row .dim { padding-top: 18px; font-size: 18px; }
+  .row .tag { display: block; font: 700 12px/1.3 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .row .new .tag { color: var(--lime); }
+  .row .new { padding-bottom: 18px; }
+}
+
+/* skins */
+.skins { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: 14px; margin-top: 36px; padding: 0; list-style: none; }
+.skin { display: flex; gap: 14px; align-items: center; background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; }
+.sw { flex: 0 0 52px; height: 52px; border-radius: 14px; border: 1px solid var(--border); }
+.skin b { display: block; font-size: 17px; line-height: 1.3; }
+.skin span { display: block; color: var(--muted); font-size: 14px; line-height: 1.4; margin-top: 2px; }
+
+/* footer */
+footer { border-top: 1px solid var(--border); padding: 56px 0 40px; }
+.foot-cta { text-align: center; }
+.foot-cta img { width: 160px; height: 85px; margin: 0 auto 16px; object-fit: contain; }
+.foot-cta h2 { margin: 0 auto; }
+.foot-cta p { color: var(--muted); margin: 12px auto 0; max-width: 34em; }
+.legal { margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--border); color: var(--muted); font-size: 14px; line-height: 1.6; text-align: center; }
+.legal p { margin: 4px 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="#top" aria-label="FUOS, back to the top">
+      <img src="assets/emblem-96.webp" srcset="assets/emblem-96.webp 1x, assets/emblem-192.webp 2x" width="48" height="26" alt="">
+      <span>FUOS</span>
+      <span class="pill" aria-hidden="true">F* UR OS</span>
+    </a>
+    <nav class="links" aria-label="Sections">
+      <a href="#inside">What's inside</a>
+      <a href="#compare">Why</a>
+      <a href="#skins">Skins</a>
+      <a href="#security">Security</a>
+    </nav>
+    <button class="menu-btn" type="button" aria-expanded="false" aria-controls="drawer" aria-label="Menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path class="i-open" d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+  </div>
+  <nav id="drawer" class="drawer" aria-label="Sections" hidden>
+    <a href="#inside">01 // What's inside</a>
+    <a href="#compare">02 // Why we built it</a>
+    <a href="#skins">03 // Seven skins</a>
+    <a href="#security">04 // Security</a>
+  </nav>
+</header>
+
+<main id="main">
+  <section class="hero" id="top">
+    <div class="wrap hero-grid">
+      <div>
+        <p class="kicker">fuos.ai // in development</p>
+        <h1>
+          <span class="h1-main">F* Ur OS.</span>
+          <span class="h1-sub">One agent. Real apps only. Zero tab hell.</span>
+        </h1>
+        <p class="lead">
+          Your operating system is forty browser tabs, apps that are browser tabs in disguise, and AI chat boxes
+          you paste screenshots into. <strong>FUOS</strong> is a full Linux workstation in your browser:
+          <strong>Chromium, a VS Code-compatible editor, LibreOffice documents, a real terminal, JupyterLab, mail and
+          calendar</strong>, worked by one agent that sees your screen and uses the same apps you do.
+        </p>
+        <div class="actions">
+          <a class="btn btn-lime" href="#inside">See what's inside</a>
+          <a class="btn btn-ghost" href="#skins">Explore the seven skins</a>
+        </div>
+        <div class="facts">
+          <div class="fact"><b>One agent</b><span>OpenCode with your choice of model, or an agent you already use: Claude Code, Codex, Gemini, Qwen, Kimi or Grok.</span></div>
+          <div class="fact"><b>Real apps</b><span>Chromium, OpenVSCode Server, Collabora Online (LibreOffice), JupyterLab.</span></div>
+          <div class="fact"><b>You approve</b><span>Sends, calendar changes and workflow runs wait for your yes, checked by the platform.</span></div>
+        </div>
+      </div>
+      <div class="stage">
+        <video id="hero-video" muted loop playsinline preload="none" poster="assets/poster.webp" width="768" height="322"
+               aria-label="The FUOS emblem: the letters FU in smoked glass, with neon paint and lightning">
+          <source src="assets/hero.mp4" type="video/mp4">
+        </video>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="inside" aria-labelledby="inside-h">
+    <div class="wrap">
+      <p class="kicker">What's inside // no mock-ups</p>
+      <h2 id="inside-h">Every window is a real app. Every document is a real file.</h2>
+      <p class="desc">No look-alike editors, no simulated terminals, no placeholder data. These are the apps you get, and the
+        agent works in them with you.</p>
+      <div class="cards two">
+        <article class="card">
+          <div class="num">01 // The desktop</div>
+          <h3>The OS itself is a tool</h3>
+          <p>The agent sees which windows are open, and opens, arranges and closes apps for you.</p>
+          <ul>
+            <li>Windows snap and resize; desktop pages, widgets and sticky notes stay where you left them.</li>
+            <li>The Assistant docks beside whatever you are working on.</li>
+            <li>Find anything from one search: files and their contents, chats, mail, calendar, settings.</li>
+          </ul>
+        </article>
+        <article class="card">
+          <div class="num">02 // The browser</div>
+          <h3>A real Chromium you can watch</h3>
+          <p>Chromium runs in its own sandbox and streams to your desktop.</p>
+          <ul>
+            <li>The agent does web tasks in the tab you are watching, typically 0.1 to 0.5 s a step.</li>
+            <li>Tabs and profiles survive a restart.</li>
+          </ul>
+        </article>
+        <article class="card">
+          <div class="num">03 // Office, code, notebooks</div>
+          <h3>Documents, code and data, for real</h3>
+          <p>Every document is a real file in your workspace, with version history and undo for what the agent changed.</p>
+          <ul>
+            <li>.docx, .xlsx and .pptx in Collabora Online (LibreOffice), with the Assistant docked beside them.</li>
+            <li>A VS Code-compatible editor (OpenVSCode Server), a real terminal and JupyterLab.</li>
+            <li>draw.io and Excalidraw diagrams, webmail, calendar and contacts.</li>
+          </ul>
+        </article>
+        <article class="card">
+          <div class="num">04 // Studios</div>
+          <h3>Bots, workflows, widgets and apps</h3>
+          <p>Build with the same agent, in the same desktop.</p>
+          <ul>
+            <li>Workflows on a visual canvas, run on a schedule or by an event.</li>
+            <li>Widgets for the desktop, and bots with their own instructions.</li>
+            <li>Apps in App Studio: each one a git repo, previewed live.</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="compare" aria-labelledby="compare-h">
+    <div class="wrap">
+      <p class="kicker">The manifesto // why we built FUOS</p>
+      <h2 id="compare-h">Why we said &ldquo;F* Ur OS&rdquo; and built our own.</h2>
+      <p class="desc">How FUOS compares with the stack of tabs and chat boxes most of us work in today.</p>
+      <div class="compare" role="table" aria-label="Today's setup compared with FUOS">
+        <div class="row head" role="row">
+          <div role="columnheader">Layer</div>
+          <div class="old" role="columnheader">Tabs and chat boxes</div>
+          <div class="new" role="columnheader">FUOS</div>
+        </div>
+        <div class="row" role="row">
+          <div class="dim" role="rowheader">The AI</div>
+          <div class="old" role="cell"><span class="tag">Today</span>Several chat tabs that can't touch your apps, fed by copy and paste.</div>
+          <div class="new" role="cell"><span class="tag">FUOS</span>One agent at a time, wired into your desktop, with every capability as a tool.</div>
+        </div>
+        <div class="row" role="row">
+          <div class="dim" role="rowheader">The apps</div>
+          <div class="old" role="cell"><span class="tag">Today</span>Look-alike editors and terminals that only imitate the real thing.</div>
+          <div class="new" role="cell"><span class="tag">FUOS</span>Real apps: Chromium, OpenVSCode Server, Collabora Online, a real terminal, JupyterLab, webmail, calendar.</div>
+        </div>
+        <div class="row" role="row">
+          <div class="dim" role="rowheader">Web tasks</div>
+          <div class="old" role="cell"><span class="tag">Today</span>Scripts that run out of sight.</div>
+          <div class="new" role="cell"><span class="tag">FUOS</span>The agent works in the browser tab you are watching.</div>
+        </div>
+        <div class="row" role="row">
+          <div class="dim" role="rowheader">Safety</div>
+          <div class="old" role="cell"><span class="tag">Today</span>Either the agent gets your whole machine, or it can't do anything useful.</div>
+          <div class="new" role="cell"><span class="tag">FUOS</span>A sandboxed agent, approvals the platform enforces, and a signed activity log.</div>
+        </div>
+        <div class="row" role="row">
+          <div class="dim" role="rowheader">The look</div>
+          <div class="old" role="cell"><span class="tag">Today</span>Corporate grey.</div>
+          <div class="new" role="cell"><span class="tag">FUOS</span>Seven skins, dark and light, each with its own icons and animated wallpaper.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="skins" aria-labelledby="skins-h">
+    <div class="wrap">
+      <p class="kicker">Seven skins // dark and light</p>
+      <h2 id="skins-h">Corporate grey is dead. Pick your skin.</h2>
+      <p class="desc">Each skin has a dark and a light palette, its own app icons and an animated wallpaper. These are the
+        seven that ship, with their dark-mode accents.</p>
+      <ul class="skins">
+        <li class="skin"><i class="sw" style="background:linear-gradient(135deg,#00f0ff,#ff2a85)"></i><div><b>Neon Diarrhea</b><span>Cyber-splatter obsidian and electric cyan/magenta chaos</span></div></li>
+        <li class="skin"><i class="sw" style="background:linear-gradient(135deg,#38bdf8,#e07a5f)"></i><div><b>Watercolour Watercooler</b><span>Bleeding pigment washes cooled in chilled office-jug acrylic</span></div></li>
+        <li class="skin"><i class="sw" style="background:linear-gradient(135deg,#ff3b1f,#ffb703)"></i><div><b>Spicy In, Spicy Out</b><span>Indian street-kitchen heat: Kashmiri chili, turmeric saffron and tandoor masala</span></div></li>
+        <li class="skin"><i class="sw" style="background:linear-gradient(135deg,#ffb000,#52d17c)"></i><div><b>Old as Shit</b><span>1983 CRT phosphor amber and bakelite vs. a sun-yellowed 1989 beige box</span></div></li>
+        <li class="skin"><i class="sw" style="background:linear-gradient(135deg,#c084fc,#2dd4bf)"></i><div><b>AI Slop</b><span>Six-fingered hyper-saturated purple-teal pitch-deck hallucination</span></div></li>
+        <li class="skin"><i class="sw" style="background:linear-gradient(135deg,#f3ead8,#94a3b8)"></i><div><b>Vanilla as FU</b><span>Deadpan titanium-graphite and vanilla-bone alabaster</span></div></li>
+        <li class="skin"><i class="sw" style="background:linear-gradient(135deg,#ff4db8,#00f5d4)"></i><div><b>You Otaku Huh?</b><span>Neo-Tokyo midnight cel-shade, cyber-sakura pink and mecha neon</span></div></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="block" id="security" aria-labelledby="security-h">
+    <div class="wrap">
+      <p class="kicker">Security // under the paint</p>
+      <h2 id="security-h">Loud on the surface. Locked down underneath.</h2>
+      <p class="desc">An agent with real tools needs real limits. In FUOS they are enforced by the system, not by asking the
+        model nicely.</p>
+      <div class="cards">
+        <article class="card">
+          <h3>A sandboxed agent</h3>
+          <p>The agent, JupyterLab and the apps it builds run in a Linux sandbox (bubblewrap): your home is read-only,
+            credentials are hidden, and it gets its own process space.</p>
+        </article>
+        <article class="card">
+          <h3>Approvals it can't talk around</h3>
+          <p>Sending mail or messages, changing your calendar, running workflows or creating a GitHub repo needs a one-time grant
+            that only your Approve creates. The platform checks it, not the model.</p>
+        </article>
+        <article class="card">
+          <h3>A log you can verify</h3>
+          <p>Every action goes into a hash chain signed with your machine's Ed25519 key. Export it and verify it
+            offline.</p>
+        </article>
+        <article class="card">
+          <h3>Encrypted keys</h3>
+          <p>The API keys and passwords you give FUOS are kept in an AES-256-GCM encrypted vault.</p>
+        </article>
+        <article class="card">
+          <h3>No agent loop of our own</h3>
+          <p>FUOS speaks open protocols to the agent you pick. Extensions the agent plants for itself are set aside at
+            every start.</p>
+        </article>
+        <article class="card">
+          <h3>Repairs itself</h3>
+          <p>A watchdog restarts an app service that stops answering and tells you if one keeps failing. It never
+            restarts the agent in the middle of your task.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-cta">
+      <img src="assets/emblem-192.webp" width="160" height="85" alt="" loading="lazy" decoding="async">
+      <p class="kicker">fuos.ai</p>
+      <h2>F* Ur OS. Boot into yours.</h2>
+      <p>FUOS is in development. Close the forty tabs soon.</p>
+    </div>
+    <div class="legal">
+      <p>&copy; 2026 fuos.ai Inc. All rights reserved.</p>
+      <p>Product names mentioned here are trademarks of their respective owners. FUOS is not affiliated with or endorsed by them.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var btn = document.querySelector(".menu-btn"), drawer = document.getElementById("drawer");
+  function setOpen(open) {
+    btn.setAttribute("aria-expanded", String(open));
+    drawer.hidden = !open;
+    btn.querySelector("path").setAttribute("d", open ? "M6 6l12 12M18 6L6 18" : "M4 7h16M4 12h16M4 17h16");
+  }
+  btn.addEventListener("click", function () { setOpen(drawer.hidden); });
+  drawer.addEventListener("click", function (e) { if (e.target.closest("a")) setOpen(false); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !drawer.hidden) { setOpen(false); btn.focus(); } });
+
+  // The loop plays only when motion is welcome; otherwise the poster stays as a still.
+  var v = document.getElementById("hero-video");
+  var mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+  function sync() {
+    if (mq.matches) { v.pause(); }
+    else { v.preload = "auto"; var p = v.play(); if (p && p.catch) p.catch(function () {}); }
+  }
+  sync();
+  if (mq.addEventListener) mq.addEventListener("change", sync);
+})();
+</script>
+</body>
+</html>
